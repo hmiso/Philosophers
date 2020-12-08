@@ -120,25 +120,54 @@ void init_vars(int argc, char **argv, t_vars *vars)
 void *life_filosofs(void *vars)
 {
 
+	printf("i born %d\n", ((t_vars *)vars)->count);
 	int i = ((t_vars *)vars)->count;
-	// int l = i - 1;
-	// int r = i == ((t_vars *)vars)->number_of_philosophers ? 1 : i;
-	int l = i - 2;
-	int r = i - 1;
-	if (i == 1)
+
+	int l = i - 1;
+	int r = i == ((t_vars *)vars)->number_of_philosophers ? 0 : i;
+
+	while(1)
 	{
-		l = 0;
-		r = ((t_vars *)vars)->number_of_philosophers - 1;
-	}
-	while (1)
-	{
+		// if (i == 1)
+		// {
+		// 	if (!(pthread_mutex_lock(&((t_vars *)vars)->mutex[0])))
+		// 		pthread_mutex_lock(&((t_vars *)vars)->mutex[((t_vars *)vars)->number_of_philosophers - 1]);
+		// }
+		// else
+		// {
+		// 	if (!(pthread_mutex_lock(&((t_vars *)vars)->mutex[i])))
+		// 		pthread_mutex_lock(&((t_vars *)vars)->mutex[i - 1]);
+		// }
+/*		if (i == 1)
+		{
+			if (!(pthread_mutex_lock(&((t_vars *)vars)->mutex[0])))
+				pthread_mutex_lock(&((t_vars *)vars)->mutex[((t_vars *)vars)->number_of_philosophers - 1]);
+			printf("i fork L %d\n", i);
+			printf("i fork R %d\n", i);
+		}
+		else
+		{
+			if (!(pthread_mutex_lock(&((t_vars *)vars)->mutex[i - 1])))
+				pthread_mutex_lock(&((t_vars *)vars)->mutex[i]);
+			printf("i fork L %d\n", i);
+			printf("i fork R %d\n", i);
+		}*/
 		pthread_mutex_lock(&((t_vars *)vars)->mutex[l]);
+		printf("i fork L %d\n", i);
 		pthread_mutex_lock(&((t_vars *)vars)->mutex[r]);
-		printf("I am phil - %d i take l-%d r-%d\n", i, l, r);
+		printf("i fork R %d\n", i);
 		printf("i eat %d\n", i);
-		usleep(((t_vars*)vars)->time_to_eat * 1000);	
-		pthread_mutex_unlock(&((t_vars *)vars)->mutex[l]);
-		pthread_mutex_unlock(&((t_vars *)vars)->mutex[r]);
+		usleep(((t_vars*)vars)->time_to_eat * 1000);
+		if (i == 1)
+		{
+			pthread_mutex_unlock(&((t_vars *)vars)->mutex[0]);
+			pthread_mutex_unlock(&((t_vars *)vars)->mutex[((t_vars *)vars)->number_of_philosophers - 1]);
+		}
+		else
+		{
+			pthread_mutex_unlock(&((t_vars *)vars)->mutex[i - 1]);
+			pthread_mutex_unlock(&((t_vars *)vars)->mutex[i]);
+		}
 		printf("i sleep %d\n", i);
 		usleep(((t_vars*)vars)->time_to_sleep * 1000);
 	}
@@ -151,7 +180,7 @@ void born_phil(t_vars *vars)
 	{
 		pthread_create(&vars->mas_fil[vars->count], NULL, life_filosofs, (void *)vars);
 		vars->count++;
-		usleep(50);		
+		usleep(50);
 	}
 }
 
