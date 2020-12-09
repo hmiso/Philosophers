@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo_one.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmiso <hmiso@student.21-school.ru>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/09 16:15:36 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/09 18:35:58 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/09 22:43:36 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ typedef struct s_vars{
 	int time_to_eat;
 	int time_to_sleep;
 	int number_of_times_each_philosopher_must_eat;
-	long time_start;
+	long int time_start;
 	pthread_t *mas_fil;
 	pthread_mutex_t *mutex;
 	t_fil *fil;
@@ -163,13 +163,14 @@ void *life_filosofs(void *vars)
 	int r = i - 1;
 	if (i == 1)
 	{
-		l = 0;
-		r = ((t_vars *)vars)->number_of_philosophers - 1;
+		r = 0;
+		l = ((t_vars *)vars)->number_of_philosophers - 1;
 	}
 	while (1)
 	{
 		pthread_mutex_lock(&((t_vars *)vars)->mutex[l]);
 		pthread_mutex_lock(&((t_vars *)vars)->mutex[r]);
+		printf("i am phil - %d i take fork L- %d R- %d\n", i, l, r);
 		gettimeofday(&ptr->fil[i - 1].new, NULL);
 		ptr->fil[i - 1].tyme_last_eat = ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000;
 		printf("%ld - i eat %d\n", ptr->fil[i - 1].tyme_last_eat - ptr->simulation_start_time, i);
@@ -208,13 +209,13 @@ void *chek_fil(void *vars)
 			ptr->time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
 			if ((ptr->time_check - ptr->fil[i].tyme_last_eat) >= ptr->time_to_die)
 			{
-				printf("%ld - i die - %d", ptr->fil[i].tyme_last_eat - ptr->time_start, i + 1);
+				printf ("%ld - i die - %d\n", ptr->time_check - ptr->simulation_start_time, i + 1);
 				exit (0);
 			}
 			i++;
 		}
 		i = 0;
-		usleep(50);
+		usleep(100);
 	}
 }
 
