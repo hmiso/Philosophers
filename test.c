@@ -44,20 +44,27 @@ void* count(void *arr)
 
 int main()
 {
-	int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-	// pthread_t p1, p2;
-	pthread_t *mas_fil;
-	mas_fil = malloc(sizeof(pthread_t) * 2);
-	pthread_mutex_init(&mutex, NULL);
-	pthread_create(&mas_fil[0], NULL, count, (void *)arr);
-	pthread_create(&mas_fil[1], NULL, count, (void *)arr);
-	// pthread_join(mas_fil[0], NULL);
-	// pthread_join(mas_fil[1], NULL);
-	int i = 0;
-	while(i < 2)
-	{
-		pthread_join(mas_fil[i], NULL);
-		i++;
-	}	
+	// int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	// // pthread_t p1, p2;
+	// pthread_t *mas_fil;
+	// mas_fil = malloc(sizeof(pthread_t) * 2);
+	// pthread_mutex_init(&mutex, NULL);
+	// pthread_create(&mas_fil[0], NULL, count, (void *)arr);
+	// pthread_create(&mas_fil[1], NULL, count, (void *)arr);
+	// // pthread_join(mas_fil[0], NULL);
+	// // pthread_join(mas_fil[1], NULL);
+	// int i = 0;
+	// while(i < 2)
+	// {
+	// 	pthread_join(mas_fil[i], NULL);
+	// 	i++;
+	// }
+	struct    timeval old;
+	struct    timeval new;
+	gettimeofday(&old, NULL);
+	printf("I am phil - %d %d %d %d \n", 1, 2 , 500000, 1000);
+	gettimeofday(&new, NULL);
+	float res = (float)new.tv_usec - (float)old.tv_usec;
+	printf("%f", res/1000);
 	return 0;
 }

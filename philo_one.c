@@ -1,10 +1,21 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philo_one.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2020/12/09 16:15:36 by hmiso             #+#    #+#             */
+/*   Updated: 2020/12/09 18:35:58 by hmiso            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <stdio.h>
-
 
 typedef struct	s_fil{
 	int index;
@@ -29,8 +40,8 @@ typedef struct s_vars{
 	struct    timeval old;
 	struct    timeval check_time;
 	pthread_t check;
+	long int time_check;
 }				t_vars;
-
 
 int		ft_isdigit(int c)
 {
@@ -148,7 +159,6 @@ void *life_filosofs(void *vars)
 
 	ptr = (t_vars *)vars;
 	int i = ptr->fil[ptr->count].index;
-	// printf("i born %d\n",i);
 	int l = i - 2;
 	int r = i - 1;
 	if (i == 1)
@@ -162,10 +172,8 @@ void *life_filosofs(void *vars)
 		pthread_mutex_lock(&((t_vars *)vars)->mutex[r]);
 		gettimeofday(&ptr->fil[i - 1].new, NULL);
 		ptr->fil[i - 1].tyme_last_eat = ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000;
-		printf("%ld - i eat %d - %ld\n", (ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000) - ptr->simulation_start_time, i, ((ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000) - ptr->fil[i].tyme_last_eat));
+		printf("%ld - i eat %d\n", ptr->fil[i - 1].tyme_last_eat - ptr->simulation_start_time, i);
 		usleep(((t_vars*)vars)->time_to_eat * 1000);
-		gettimeofday(&ptr->fil[i - 1].new, NULL);
-		ptr->fil[i - 1].tyme_last_eat = ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000;
 		pthread_mutex_unlock(&((t_vars *)vars)->mutex[l]);
 		pthread_mutex_unlock(&((t_vars *)vars)->mutex[r]);
 		printf("i sleep %d\n", i);
@@ -176,11 +184,10 @@ void *life_filosofs(void *vars)
 
 void born_phil(t_vars *vars)
 {
-
 	while (vars->count < vars->number_of_philosophers)
 	{
 		pthread_create(&vars->mas_fil[vars->count], NULL, life_filosofs, (void *)vars);
-		usleep(10);
+		usleep(50);
 		if (vars->count == vars->number_of_philosophers)
 			break;
 		vars->count++;
@@ -191,26 +198,26 @@ void *chek_fil(void *vars)
 {
 	t_vars *ptr;
 	int i = 0;
-	long int time_check;
+
 	ptr = (t_vars *)vars;
 	while(1)
 	{
 		while(i < ptr->number_of_philosophers)
 		{
 			gettimeofday(&ptr->check_time, NULL);
-			time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
-			//printf("%ld\n", time_check - ptr->fil[i].tyme_last_eat);
-			if ((time_check - ptr->fil[i].tyme_last_eat) >= ptr->time_to_die)
+			ptr->time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
+			if ((ptr->time_check - ptr->fil[i].tyme_last_eat) >= ptr->time_to_die)
 			{
-				printf("%ld - i die - %d", time_check - ptr->fil[i].tyme_last_eat, i);
+				printf("%ld - i die - %d", ptr->fil[i].tyme_last_eat - ptr->time_start, i + 1);
 				exit (0);
 			}
 			i++;
 		}
 		i = 0;
-		usleep(1000);
+		usleep(50);
 	}
 }
+
 
 int main(int argc, char **argv)
 {
@@ -223,8 +230,8 @@ int main(int argc, char **argv)
 		return (0);
 	}
 	init_vars(argc, argv, &vars);
-	born_phil(&vars);
 	pthread_create(&vars.check, NULL, chek_fil, (void *)&vars);
+	born_phil(&vars);
 	while (i < vars.number_of_philosophers)
 	{
 		pthread_join(vars.mas_fil[i], NULL);

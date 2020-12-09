@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/03 19:50:23 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/07 13:35:38 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/08 17:36:45 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ typedef struct s_vars{
 	int number_of_times_each_philosopher_must_eat;	
 	pthread_t *mas_fil;
 	pthread_mutex_t *mutex;
-
+	t_phil *phil;
 }				t_vars;
 
 
