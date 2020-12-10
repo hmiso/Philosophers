@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo_one.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmiso <hmiso@student.21-school.ru>         +#+  +:+       +#+        */
+/*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/09 16:15:36 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/09 22:43:36 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/10 20:34:40 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,12 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <stdio.h>
+#include "libft/libft.h"
 
 typedef struct	s_fil{
 	int index;
 	long int tyme_last_eat;
-	struct    timeval new;
+	struct		timeval new;
 }				t_fil;
 
 typedef struct s_vars{
@@ -37,84 +38,12 @@ typedef struct s_vars{
 	pthread_t *mas_fil;
 	pthread_mutex_t *mutex;
 	t_fil *fil;
-	struct    timeval old;
-	struct    timeval check_time;
+	struct		timeval old;
+	struct		timeval check_time;
 	pthread_t check;
 	long int time_check;
+	pthread_mutex_t print_mutex;
 }				t_vars;
-
-int		ft_isdigit(int c)
-{
-	if (c >= 48 && c <= 57)
-		return (1);
-	else
-		return (0);
-}
-
-int	ft_strlen(const char *s)
-{
-	int i;
-
-	i = 0;
-	while (s[i] != '\0')
-	{
-		i++;
-	}
-	return (i);
-}
-
-static int	ft_char_int(const char *str, unsigned long m, int c, int i)
-{
-	int	d;
-
-	d = 0;
-	while (ft_isdigit(str[i]))
-	{
-		m = m * 10 + (str[i] - '0');
-		if (str[i] - '0' != 0 || d != 0)
-			d++;
-		if (d > 19 || m > 9223372036854775807)
-		{
-			if (c > 0)
-				return (-1);
-			else
-				return (0);
-		}
-		if (!ft_isdigit(str[i + 1]))
-			return ((int)m * c);
-		i++;
-	}
-	return (0);
-}
-
-int			ft_atoi(const char *str)
-{
-	int				i;
-	unsigned long	m;
-	int				c;
-
-	i = 0;
-	m = 0;
-	c = 1;
-	while (str[i] != '\0')
-	{
-		if (str[i] == '\t' || str[i] == '\n' || str[i] == '\v' || str[i]
-		== '\f' || str[i] == '\r' || str[i] == ' ')
-			i++;
-		else if (str[i] == '-' && ft_isdigit(str[i + 1]))
-		{
-			c = -1;
-			i++;
-		}
-		else if (str[i] == '+' && ft_isdigit(str[i + 1]))
-			i++;
-		else if (ft_isdigit(str[i]))
-			return (ft_char_int(str, m, c, i));
-		else
-			return (0);
-	}
-	return (0);
-}
 
 void init_vars(int argc, char **argv, t_vars *vars)
 {
@@ -142,6 +71,7 @@ void init_vars(int argc, char **argv, t_vars *vars)
 		vars->fil[vars->count].index = vars->count + 1;
 		vars->count++;
 	}
+	pthread_mutex_init(&vars->print_mutex, NULL);
 	vars->count = 0;
 	gettimeofday(&vars->old, NULL);
 	while(vars->count < vars->number_of_philosophers)
@@ -151,6 +81,19 @@ void init_vars(int argc, char **argv, t_vars *vars)
 	}
 	vars->simulation_start_time = vars->old.tv_sec * 1000 + vars->old.tv_usec / 1000;
 	vars->count = 0;
+}
+
+void print(char *str, int i, t_vars *vars)
+{
+	struct		timeval print_time;
+	int			count;
+	char		*print_str;
+	char		*ptr;
+	char		*ptr_free;
+	
+	pthread_mutex_lock(&vars->print_mutex);
+	
+	pthread_mutex_unlock(&vars->print_mutex);
 }
 
 void *life_filosofs(void *vars)
@@ -168,17 +111,21 @@ void *life_filosofs(void *vars)
 	}
 	while (1)
 	{
-		pthread_mutex_lock(&((t_vars *)vars)->mutex[l]);
-		pthread_mutex_lock(&((t_vars *)vars)->mutex[r]);
-		printf("i am phil - %d i take fork L- %d R- %d\n", i, l, r);
+		if(!(pthread_mutex_lock(&((t_vars *)vars)->mutex[l])))
+			pthread_mutex_lock(&((t_vars *)vars)->mutex[r]);
+		//printf("i am phil - %d i take fork L- %d R- %d\n", i, l, r);
+		print(" has taken a fork\n", i, ptr);
 		gettimeofday(&ptr->fil[i - 1].new, NULL);
+		//print(" is eating\n", i, ptr);
 		ptr->fil[i - 1].tyme_last_eat = ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000;
-		printf("%ld - i eat %d\n", ptr->fil[i - 1].tyme_last_eat - ptr->simulation_start_time, i);
+		//printf("%ld - i eat %d\n", ptr->fil[i - 1].tyme_last_eat - ptr->simulation_start_time, i);
 		usleep(((t_vars*)vars)->time_to_eat * 1000);
 		pthread_mutex_unlock(&((t_vars *)vars)->mutex[l]);
 		pthread_mutex_unlock(&((t_vars *)vars)->mutex[r]);
-		printf("i sleep %d\n", i);
+		// printf("i sleep %d\n", i);
+		//print(" is sleeping\n", i, ptr);		
 		usleep(((t_vars*)vars)->time_to_sleep * 1000);
+		//print(" is thinking\n", i, ptr);
 	}
 	return NULL;
 }
@@ -207,10 +154,14 @@ void *chek_fil(void *vars)
 		{
 			gettimeofday(&ptr->check_time, NULL);
 			ptr->time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
-			if ((ptr->time_check - ptr->fil[i].tyme_last_eat) >= ptr->time_to_die)
+			if ((ptr->time_check - ptr->fil[i].tyme_last_eat) > ptr->time_to_die)
 			{
-				printf ("%ld - i die - %d\n", ptr->time_check - ptr->simulation_start_time, i + 1);
-				exit (0);
+				//usleep(100);
+				if ((ptr->time_check - ptr->fil[i].tyme_last_eat) > ptr->time_to_die)
+				{
+					printf ("%ld - i die - %d\n", ptr->time_check - ptr->simulation_start_time, i + 1);
+					exit (0);
+				}
 			}
 			i++;
 		}
@@ -218,7 +169,6 @@ void *chek_fil(void *vars)
 		usleep(100);
 	}
 }
-
 
 int main(int argc, char **argv)
 {
