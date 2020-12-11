@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/09 16:15:36 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/10 20:34:40 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/11 12:25:58 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 typedef struct	s_fil{
 	int index;
 	long int tyme_last_eat;
+	int			count_cycle;
 	struct		timeval new;
 }				t_fil;
 
@@ -69,6 +70,7 @@ void init_vars(int argc, char **argv, t_vars *vars)
 	while(vars->count < vars->number_of_philosophers)
 	{
 		vars->fil[vars->count].index = vars->count + 1;
+		vars->fil[vars->count].count_cycle = 0;
 		vars->count++;
 	}
 	pthread_mutex_init(&vars->print_mutex, NULL);
@@ -92,7 +94,11 @@ void print(char *str, int i, t_vars *vars)
 	char		*ptr_free;
 	
 	pthread_mutex_lock(&vars->print_mutex);
-	
+	gettimeofday(&print_time, NULL);
+	ft_putnbr_fd((print_time.tv_sec * 1000 + print_time.tv_usec / 1000 - vars->simulation_start_time), 1);
+	write(1, " ", 1);
+	ft_putnbr_fd(i, 1);
+	write(1, str, ft_strlen(str));
 	pthread_mutex_unlock(&vars->print_mutex);
 }
 
@@ -113,19 +119,17 @@ void *life_filosofs(void *vars)
 	{
 		if(!(pthread_mutex_lock(&((t_vars *)vars)->mutex[l])))
 			pthread_mutex_lock(&((t_vars *)vars)->mutex[r]);
-		//printf("i am phil - %d i take fork L- %d R- %d\n", i, l, r);
 		print(" has taken a fork\n", i, ptr);
+		ptr->fil[i].count_cycle++;
 		gettimeofday(&ptr->fil[i - 1].new, NULL);
-		//print(" is eating\n", i, ptr);
+		print(" is eating\n", i, ptr);
 		ptr->fil[i - 1].tyme_last_eat = ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000;
-		//printf("%ld - i eat %d\n", ptr->fil[i - 1].tyme_last_eat - ptr->simulation_start_time, i);
 		usleep(((t_vars*)vars)->time_to_eat * 1000);
 		pthread_mutex_unlock(&((t_vars *)vars)->mutex[l]);
 		pthread_mutex_unlock(&((t_vars *)vars)->mutex[r]);
-		// printf("i sleep %d\n", i);
-		//print(" is sleeping\n", i, ptr);		
+		print(" is sleeping\n", i, ptr);
 		usleep(((t_vars*)vars)->time_to_sleep * 1000);
-		//print(" is thinking\n", i, ptr);
+		print(" is thinking\n", i, ptr);
 	}
 	return NULL;
 }
@@ -146,7 +150,7 @@ void *chek_fil(void *vars)
 {
 	t_vars *ptr;
 	int i = 0;
-
+	int count;
 	ptr = (t_vars *)vars;
 	while(1)
 	{
@@ -154,15 +158,19 @@ void *chek_fil(void *vars)
 		{
 			gettimeofday(&ptr->check_time, NULL);
 			ptr->time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
+			if(ptr->number_of_times_each_philosopher_must_eat != 0 && ptr->fil[i].count_cycle == ptr->number_of_philosophers)
+				count++;
 			if ((ptr->time_check - ptr->fil[i].tyme_last_eat) > ptr->time_to_die)
 			{
-				//usleep(100);
+				usleep(100);
 				if ((ptr->time_check - ptr->fil[i].tyme_last_eat) > ptr->time_to_die)
 				{
-					printf ("%ld - i die - %d\n", ptr->time_check - ptr->simulation_start_time, i + 1);
-					exit (0);
+					print(" died\n", i + 1, ptr);
+					return NULL;
 				}
 			}
+			if (ptr->number_of_times_each_philosopher_must_eat != 0 && count == ptr->number_of_times_each_philosopher_must_eat)
+				return NULL;
 			i++;
 		}
 		i = 0;
@@ -183,9 +191,5 @@ int main(int argc, char **argv)
 	init_vars(argc, argv, &vars);
 	pthread_create(&vars.check, NULL, chek_fil, (void *)&vars);
 	born_phil(&vars);
-	while (i < vars.number_of_philosophers)
-	{
-		pthread_join(vars.mas_fil[i], NULL);
-		i++;
-	}
+	pthread_join(vars.check, NULL);
 }
