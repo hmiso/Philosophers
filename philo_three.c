@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/12 18:56:09 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/13 12:36:23 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/13 19:25:32 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,11 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <semaphore.h>
+#include <signal.h>
 #include "libft/libft.h"
+
+
+void *chek_fil(void *vars);
 
 typedef struct	s_fil{
 	int index;
@@ -46,6 +50,8 @@ typedef struct s_vars{
 	long int time_check;
 	sem_t *print_sem;
 	sem_t *sem;
+	sem_t *block_print_die;
+	sem_t *check_count_eat;
 }				t_vars;
 
 void init_vars(int argc, char **argv, t_vars *vars)
@@ -63,7 +69,7 @@ void init_vars(int argc, char **argv, t_vars *vars)
 	vars->mas_fil = malloc(sizeof(pthread_t) * vars->number_of_philosophers);
 	vars->pid = malloc(sizeof(pid_t) * vars->number_of_philosophers);
 	vars->count = 0;
-	vars->fil = (t_fil *)malloc(sizeof(t_fil *) * vars->number_of_philosophers);
+	vars->fil = (t_fil *)malloc(sizeof(t_fil) * vars->number_of_philosophers);
 	while(vars->count < vars->number_of_philosophers)
 	{
 		vars->fil[vars->count].index = vars->count + 1;
@@ -83,6 +89,11 @@ void init_vars(int argc, char **argv, t_vars *vars)
 	}
 	vars->simulation_start_time = vars->old.tv_sec * 1000 + vars->old.tv_usec / 1000;
 	vars->count = 0;
+
+	sem_unlink("block_print_die");
+	vars->block_print_die = sem_open("block_print_die", O_CREAT, 0666, 1);
+	sem_unlink("check_count_eat");
+	vars->check_count_eat = sem_open("check_count_eat", O_CREAT, 0666, 1);		
 }
 
 void print(char *str, int i, t_vars *vars)
@@ -105,11 +116,12 @@ void print(char *str, int i, t_vars *vars)
 void *life_filosofs(void *vars)
 {
 	t_vars *ptr;
-
+	pthread_t check;
 	ptr = (t_vars *)vars;
 	int i = ptr->fil[ptr->count].index;
 	int l = i - 2;
 	int r = i - 1;
+	pthread_create(&ptr->check, NULL, chek_fil, (void *)ptr);
 	if (i == 1)
 	{
 		r = 0;
@@ -123,7 +135,7 @@ void *life_filosofs(void *vars)
 				sem_post(ptr->sem);
 		}
 		print(" has taken a fork\n", i, ptr);
-		ptr->fil[i].count_cycle++;
+		ptr->fil[0].count_cycle++;
 		gettimeofday(&ptr->fil[i - 1].new, NULL);
 		print(" is eating\n", i, ptr);
 		ptr->fil[i - 1].tyme_last_eat = ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000;
@@ -137,20 +149,9 @@ void *life_filosofs(void *vars)
 	return NULL;
 }
 
-// void born_phil(t_vars *vars)
-// {
-// 	while (vars->count < vars->number_of_philosophers)
-// 	{
-// 		pthread_create(&vars->mas_fil[vars->count], NULL, life_filosofs, (void *)vars);
-// 		usleep(50);
-// 		if (vars->count == vars->number_of_philosophers)
-// 			break;
-// 		vars->count++;
-// 	}
-// }
-
 void born_phil(t_vars *vars)
 {
+	int i = 0;
 	while (vars->count < vars->number_of_philosophers)
 	{
 		vars->pid[vars->count] = fork();
@@ -160,41 +161,40 @@ void born_phil(t_vars *vars)
 			exit(0);
 		}
 		if (vars->pid[vars->count] == 0)
-		{
 			life_filosofs(vars);
-		}
 		vars->count++;
 	}
-	waitpid(-1, 0 ,0);
+	waitpid(-1, NULL , WUNTRACED);
+	while(i < vars->number_of_philosophers)
+	{
+		kill(vars->pid[i], SIGINT);
+		i++;
+	}
 }
 
 void *chek_fil(void *vars)
 {
 	t_vars *ptr;
 	int i = 0;
-	int count;
 	ptr = (t_vars *)vars;
 	while(1)
 	{
-		while(i < ptr->number_of_philosophers)
+		gettimeofday(&ptr->check_time, NULL);
+		ptr->time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
+		if ((ptr->time_check - ptr->fil[ptr->count].tyme_last_eat) > ptr->time_to_die)
 		{
-			gettimeofday(&ptr->check_time, NULL);
-			ptr->time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
-			// if(ptr->number_of_times_each_philosopher_must_eat != 0 && ptr->fil[i].count_cycle == ptr->number_of_philosophers)
-			// 	count++;
-			if ((ptr->time_check - ptr->fil[i].tyme_last_eat) > ptr->time_to_die)
+			usleep(100);
+			if ((ptr->time_check - ptr->fil[ptr->count].tyme_last_eat) > ptr->time_to_die)
 			{
-				usleep(100);
-				if ((ptr->time_check - ptr->fil[i].tyme_last_eat) > ptr->time_to_die)
-				{
-					print(" died\n", i + 1, ptr);
-					exit(0);
-				}
+				sem_wait(ptr->block_print_die);
+				print(" died\n", i + 1, ptr);
+				exit(0);
 			}
-			// if (ptr->number_of_times_each_philosopher_must_eat != 0 && count == ptr->number_of_times_each_philosopher_must_eat)
-			// 	return NULL;
 		}
-		i = 0;
+		if (ptr->number_of_times_each_philosopher_must_eat != 0 && ptr->fil[0].count_cycle == ptr->number_of_times_each_philosopher_must_eat)
+		{
+			exit(0);
+		}
 		usleep(100);
 	}
 }
@@ -210,7 +210,6 @@ int main(int argc, char **argv)
 		return (0);
 	}
 	init_vars(argc, argv, &vars);
-	// pthread_create(&vars.check, NULL, chek_fil, (void *)&vars);
 	born_phil(&vars);
 	pthread_join(vars.check, NULL);
 }

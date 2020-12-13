@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/11 12:50:21 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/12 17:55:11 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/13 17:56:03 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ void init_vars(int argc, char **argv, t_vars *vars)
 		vars->number_of_times_each_philosopher_must_eat = 0;
 	vars->mas_fil = malloc(sizeof(pthread_t) * vars->number_of_philosophers);
 	vars->count = 0;
-	vars->fil = (t_fil *)malloc(sizeof(t_fil *) * vars->number_of_philosophers);
+	vars->fil = (t_fil *)malloc(sizeof(t_fil) * vars->number_of_philosophers);
 	while(vars->count < vars->number_of_philosophers)
 	{
 		vars->fil[vars->count].index = vars->count + 1;

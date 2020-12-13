@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/09 16:15:36 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/11 12:25:58 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/13 17:34:29 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,7 @@ void init_vars(int argc, char **argv, t_vars *vars)
 		vars->count++;
 	}
 	vars->count = 0;
-	vars->fil = (t_fil *)malloc(sizeof(t_fil *) * vars->number_of_philosophers);
+	vars->fil = (t_fil *)malloc(sizeof(t_fil) * vars->number_of_philosophers);
 	while(vars->count < vars->number_of_philosophers)
 	{
 		vars->fil[vars->count].index = vars->count + 1;
