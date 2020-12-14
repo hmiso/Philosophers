@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/09 16:15:36 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/13 17:34:29 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/14 18:08:32 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,7 +120,7 @@ void *life_filosofs(void *vars)
 		if(!(pthread_mutex_lock(&((t_vars *)vars)->mutex[l])))
 			pthread_mutex_lock(&((t_vars *)vars)->mutex[r]);
 		print(" has taken a fork\n", i, ptr);
-		ptr->fil[i].count_cycle++;
+		ptr->fil[i - 1].count_cycle++;
 		gettimeofday(&ptr->fil[i - 1].new, NULL);
 		print(" is eating\n", i, ptr);
 		ptr->fil[i - 1].tyme_last_eat = ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000;
@@ -150,7 +150,8 @@ void *chek_fil(void *vars)
 {
 	t_vars *ptr;
 	int i = 0;
-	int count;
+	int j = 0;
+	int count = 0;
 	ptr = (t_vars *)vars;
 	while(1)
 	{
@@ -158,8 +159,11 @@ void *chek_fil(void *vars)
 		{
 			gettimeofday(&ptr->check_time, NULL);
 			ptr->time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
-			if(ptr->number_of_times_each_philosopher_must_eat != 0 && ptr->fil[i].count_cycle == ptr->number_of_philosophers)
+			if (ptr->number_of_times_each_philosopher_must_eat != 0 && ptr->fil[j].count_cycle == ptr->number_of_times_each_philosopher_must_eat)
+			{
+				j++;
 				count++;
+			}
 			if ((ptr->time_check - ptr->fil[i].tyme_last_eat) > ptr->time_to_die)
 			{
 				usleep(100);
@@ -169,8 +173,10 @@ void *chek_fil(void *vars)
 					return NULL;
 				}
 			}
-			if (ptr->number_of_times_each_philosopher_must_eat != 0 && count == ptr->number_of_times_each_philosopher_must_eat)
+			if (ptr->number_of_times_each_philosopher_must_eat != 0 && count == ptr->number_of_philosophers)
+			{	
 				return NULL;
+			}
 			i++;
 		}
 		i = 0;

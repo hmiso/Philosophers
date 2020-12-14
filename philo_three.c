@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/12 18:56:09 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/13 19:25:32 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/14 17:22:59 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ typedef struct s_vars{
 	sem_t *print_sem;
 	sem_t *sem;
 	sem_t *block_print_die;
-	sem_t *check_count_eat;
+	int count_cycle;
 }				t_vars;
 
 void init_vars(int argc, char **argv, t_vars *vars)
@@ -62,6 +62,7 @@ void init_vars(int argc, char **argv, t_vars *vars)
 	vars->time_to_eat = ft_atoi(argv[3]);
 	vars->time_to_sleep = ft_atoi(argv[4]);
 	vars->count = 0;
+	vars->count_cycle = 0;
 	if (argc == 6)
 		vars->number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
 	else
@@ -89,14 +90,11 @@ void init_vars(int argc, char **argv, t_vars *vars)
 	}
 	vars->simulation_start_time = vars->old.tv_sec * 1000 + vars->old.tv_usec / 1000;
 	vars->count = 0;
-
 	sem_unlink("block_print_die");
-	vars->block_print_die = sem_open("block_print_die", O_CREAT, 0666, 1);
-	sem_unlink("check_count_eat");
-	vars->check_count_eat = sem_open("check_count_eat", O_CREAT, 0666, 1);		
+	vars->block_print_die = sem_open("block_print_die", O_CREAT, 0666, 1);	
 }
 
-void print(char *str, int i, t_vars *vars)
+void print(char *str, int i, t_vars *vars, int flag)
 {
 	struct		timeval print_time;
 	int			count;
@@ -110,7 +108,8 @@ void print(char *str, int i, t_vars *vars)
 	write(1, " ", 1);
 	ft_putnbr_fd(i, 1);
 	write(1, str, ft_strlen(str));
-	sem_post(vars->print_sem);
+	if (flag != 1)
+		sem_post(vars->print_sem);
 }
 
 void *life_filosofs(void *vars)
@@ -134,41 +133,57 @@ void *life_filosofs(void *vars)
 			if(sem_wait(ptr->sem) == -1)
 				sem_post(ptr->sem);
 		}
-		print(" has taken a fork\n", i, ptr);
-		ptr->fil[0].count_cycle++;
+		print(" has taken a fork\n", i, ptr, 0);
+		ptr->count_cycle++;
 		gettimeofday(&ptr->fil[i - 1].new, NULL);
-		print(" is eating\n", i, ptr);
+		print(" is eating\n", i, ptr, 0);
+		if (ptr->number_of_times_each_philosopher_must_eat != 0 && ptr->number_of_times_each_philosopher_must_eat == ptr->count_cycle)
+		{
+			sem_post(ptr->sem);
+			sem_post(ptr->sem);
+			exit(1);
+		}
 		ptr->fil[i - 1].tyme_last_eat = ptr->fil[i - 1].new.tv_sec * 1000 + ptr->fil[i - 1].new.tv_usec / 1000;
 		usleep(((t_vars*)vars)->time_to_eat * 1000);
 		sem_post(ptr->sem);
 		sem_post(ptr->sem);
-		print(" is sleeping\n", i, ptr);
+		print(" is sleeping\n", i, ptr, 0);
 		usleep(((t_vars*)vars)->time_to_sleep * 1000);
-		print(" is thinking\n", i, ptr);
+		print(" is thinking\n", i, ptr, 0);
 	}
-	return NULL;
+	exit (1);
 }
 
 void born_phil(t_vars *vars)
 {
 	int i = 0;
+	int status = 0;
 	while (vars->count < vars->number_of_philosophers)
 	{
 		vars->pid[vars->count] = fork();
 		if (vars->pid[vars->count] < 0)
 		{
-			print("Error", 0, vars);
+			print("Error", 0, vars, 0);
 			exit(0);
 		}
 		if (vars->pid[vars->count] == 0)
 			life_filosofs(vars);
 		vars->count++;
 	}
-	waitpid(-1, NULL , WUNTRACED);
-	while(i < vars->number_of_philosophers)
+	while(vars->count > 0)
 	{
-		kill(vars->pid[i], SIGINT);
-		i++;
+		waitpid(-1, &status, 0);
+		if (status == 0)
+		{
+			while(i < vars->count)
+			{
+				kill(vars->pid[i], SIGINT);
+				i++;
+			}
+			exit(0);
+		}
+		else
+			vars->count--;
 	}
 }
 
@@ -183,17 +198,12 @@ void *chek_fil(void *vars)
 		ptr->time_check = ptr->check_time.tv_sec * 1000 + ptr->check_time.tv_usec / 1000;
 		if ((ptr->time_check - ptr->fil[ptr->count].tyme_last_eat) > ptr->time_to_die)
 		{
-			usleep(100);
+			// usleep(100);
 			if ((ptr->time_check - ptr->fil[ptr->count].tyme_last_eat) > ptr->time_to_die)
 			{
-				sem_wait(ptr->block_print_die);
-				print(" died\n", i + 1, ptr);
+				print(" died\n", ptr->count + 1, ptr, 1);
 				exit(0);
 			}
-		}
-		if (ptr->number_of_times_each_philosopher_must_eat != 0 && ptr->fil[0].count_cycle == ptr->number_of_times_each_philosopher_must_eat)
-		{
-			exit(0);
 		}
 		usleep(100);
 	}
