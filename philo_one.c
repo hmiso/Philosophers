@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/09 16:15:36 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/14 18:08:32 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/14 18:52:28 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,6 +175,7 @@ void *chek_fil(void *vars)
 			}
 			if (ptr->number_of_times_each_philosopher_must_eat != 0 && count == ptr->number_of_philosophers)
 			{	
+				
 				return NULL;
 			}
 			i++;
