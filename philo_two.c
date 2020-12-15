@@ -6,7 +6,7 @@
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/11 12:50:21 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/13 17:56:03 by hmiso            ###   ########.fr       */
+/*   Updated: 2020/12/15 14:19:49 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <semaphore.h>
-#include "libft/libft.h"
+
 
 typedef struct	s_fil{
 	int index;

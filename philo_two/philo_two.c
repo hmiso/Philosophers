@@ -1,35 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo_one.c                                        :+:      :+:    :+:   */
+/*   philo_two.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2020/12/09 16:15:36 by hmiso             #+#    #+#             */
-/*   Updated: 2020/12/15 16:58:43 by hmiso            ###   ########.fr       */
+/*   Created: 2020/12/11 12:50:21 by hmiso             #+#    #+#             */
+/*   Updated: 2020/12/15 18:49:47 by hmiso            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "philo_one.h"
+#include "philo_two.h"
 
 void	*life_filosofs(void *vars)
 {
-	t_vars		*ptr;
-	int			i;
-	int			l;
-	int			r;
+	t_vars	*ptr;
+	int		i;
 
 	ptr = (t_vars *)vars;
 	i = ptr->fil[ptr->count].index;
-	l = i - 2;
-	r = i - 1;
-	if (i == 1)
-	{
-		r = 0;
-		l = ((t_vars *)vars)->number_of_philosophers - 1;
-	}
 	while (ptr->flag)
-		life_phil_res(ptr, l, r, i);
+		life_phil_res(ptr, i);
 	return (NULL);
 }
 
@@ -69,12 +60,13 @@ int		check_fil_res(t_vars *ptr, int *i, int *j, int *count)
 	if (ptr->simulation_counter != 0 && *count == ptr->number_of_philosophers)
 	{
 		ptr->flag = 0;
+		sem_wait(ptr->print_sem);
 		return (1);
 	}
 	return (0);
 }
 
-void	*check_fil(void *vars)
+void	*chek_fil(void *vars)
 {
 	t_vars	*ptr;
 	int		i;
@@ -112,7 +104,7 @@ int		main(int argc, char **argv)
 		write(2, "error: bad arguments\n", ft_strlen("error: bad arguments\n"));
 		return (0);
 	}
-	pthread_create(&vars.check, NULL, check_fil, (void *)&vars);
+	pthread_create(&vars.check, NULL, chek_fil, (void *)&vars);
 	born_phil(&vars);
 	pthread_join(vars.check, NULL);
 }

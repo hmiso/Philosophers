@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <semaphore.h>
-#include "libft/libft.h"
 
 int main()
 {
@@ -14,11 +13,12 @@ int main()
 	pid = fork();
 	if (pid == 0)
 	{
-
+		getchar();
 	}
 	else
 	{
 		waitpid(-1, 0, WUNTRACED);
+		geatchar();
 	}
 	
 }

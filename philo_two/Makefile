@@ -6,20 +6,20 @@
 #    By: hmiso <hmiso@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/12/14 21:35:31 by hmiso             #+#    #+#              #
-#    Updated: 2020/12/15 13:42:55 by hmiso            ###   ########.fr        #
+#    Updated: 2020/12/15 18:40:46 by hmiso            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME=philo_one
+NAME=philo_two
 
-OBJ_FILES =  philo_one.o ft_atoi.o ft_putnbr_fd.o ft_strlen.o ft_isdigit.o ft_putchar_fd.o \
-			 philo_one_rec.o philo_one_rec_two.o 
+OBJ_FILES =  philo_two.o ft_atoi.o ft_putnbr_fd.o ft_strlen.o ft_isdigit.o ft_putchar_fd.o \
+			 philo_two_rec.o philo_two_rec_one.o 
 
 CFLAGS = -Wall -Wextra -Werror
 
 all: $(NAME)
 
-$(NAME): $(OBJ_FILES) philo_one.h
+$(NAME): $(OBJ_FILES) philo_two.h
 	gcc $(OBJ_FILES) -o $(NAME)
 
 %.o: %.c 
